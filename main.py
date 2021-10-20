@@ -12,7 +12,7 @@ st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 st.markdown("# Train forecasting models for stock prices")
 # ------ layout setting---------------------------
 window_selection_c = st.sidebar.container()
-window_selection_c.markdown("## Watch list")
+window_selection_c.markdown("## Insights")
 
 sub_columns = window_selection_c.columns(2)
 change_c = st.sidebar.container()

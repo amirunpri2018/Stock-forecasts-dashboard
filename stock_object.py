@@ -93,11 +93,11 @@ class Stock:
             (color, marker) = ("green", "+") if difference >= 0 else ("red", "-")
 
             cols[0].markdown(
-                f"""<p style="font-size: 100%;margin-left:10px">{self.symbol} \t {e}</p>""",
+                f"""<p style="font-size: 90%;margin-left:5px">{self.symbol} \t {e}</p>""",
                 unsafe_allow_html=True,
             )
             cols[1].markdown(
-                f"""<p style="color:{color};font-size:100%;margin-right:10px">{marker} \t {difference} {marker} {change}</p>""",
+                f"""<p style="color:{color};font-size:90%;margin-right:5px">{marker} \t {difference} {marker} {change} % </p>""",
                 unsafe_allow_html=True,
             ) 
         else:
