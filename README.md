@@ -1,4 +1,6 @@
+
 # streamlit_investor_dashboard
+![screenshot](thumbnail.PNG)
 
 A simple stock forecasting dashboard entirely written in python, features include:
 * Visualize a stock closing price over a chosen perdiod of time, and the total change over the period. 
@@ -13,4 +15,3 @@ NOTE: if prophet fails to install as it did in my case, try installing it throug
 `conda install -c conda-forge prophet`
 
 
-![screenshot](thumbnail.PNG)
