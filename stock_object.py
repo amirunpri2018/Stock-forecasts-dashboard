@@ -1,13 +1,10 @@
 from prophet.forecaster import Prophet
 import yfinance as yf
 import datetime
-import plotly.express as px
 import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
-from typing import Optional, Any, Dict, Tuple
 from sklearn.metrics import mean_absolute_percentage_error
-
 
 class Stock:
     """
@@ -31,6 +28,7 @@ class Stock:
         """
 
         data = yf.download(self.symbol, start, end + datetime.timedelta(days=1))
+        print(len(data))
         try:
             assert len(data) > 0
         except AssertionError:
@@ -40,6 +38,7 @@ class Stock:
         data["date"] = data.apply(lambda raw: raw["datetime"].date(), axis=1)
 
         data = data[["date", self.column]]
+        data['change']=data[[self.column]].pct_change()
         if inplace:
             self.data = data
             self.start = start
@@ -48,36 +47,61 @@ class Stock:
         return data
 
     def plot_raw_data(self, fig):
-        fig = fig.add_trace(
+        """
+        Plot time-serie line chart of closing price
+        """
+        if len(self.data!=0):
+            fig = fig.add_trace(
+                go.Scatter(
+                    x=self.data.date,
+                    y=self.data[self.column],
+                    mode="lines",
+                    name=self.symbol,
+                )
+            )
+            return fig
+        else:
+            return fig
+
+    def plot_pct_change(self, fig):
+        """
+        Plot percentage change of stock closing price
+        """
+        fig.add_trace(
             go.Scatter(
                 x=self.data.date,
-                y=self.data[self.column],
+                y=self.data['change'],
                 mode="lines",
-                name=self.symbol,
+                name=f"{self.symbol} {self.column} change %" ,
             )
         )
+
+      
         return fig
 
     def show_delta(self):
-        epsilon = 1e-6
-        i = self.start
-        j = self.end
-        s = self.data.query("date==@i")[self.column].values[0]
-        e = self.data.query("date==@j")[self.column].values[0]
-        difference = round(e - s, 2)
-        change = round(difference / (s + epsilon) * 100, 2)
-        e = round(e, 2)
-        cols = st.columns(2)
-        (color, marker) = ("green", "+") if difference >= 0 else ("red", "-")
+        if len(self.data!=0):
+            epsilon = 1e-6
+            i = self.start
+            j = self.end
+            s = self.data.query("date==@i")[self.column].values[0]
+            e = self.data.query("date==@j")[self.column].values[0]
+            difference = round(e - s, 2)
+            change = round(difference / (s + epsilon) * 100, 2)
+            e = round(e, 2)
+            cols = st.columns(2)
+            (color, marker) = ("green", "+") if difference >= 0 else ("red", "-")
 
-        cols[0].markdown(
-            f"""<p style="font-size: 100%;margin-left:10px">{self.symbol} \t {e}</p>""",
-            unsafe_allow_html=True,
-        )
-        cols[1].markdown(
-            f"""<p style="color:{color};font-size:100%;margin-right:10px">{marker} \t {difference} {marker} {change}</p>""",
-            unsafe_allow_html=True,
-        )
+            cols[0].markdown(
+                f"""<p style="font-size: 100%;margin-left:10px">{self.symbol} \t {e}</p>""",
+                unsafe_allow_html=True,
+            )
+            cols[1].markdown(
+                f"""<p style="color:{color};font-size:100%;margin-right:10px">{marker} \t {difference} {marker} {change}</p>""",
+                unsafe_allow_html=True,
+            ) 
+        else:
+            st.write('No data')
 
     @staticmethod
     def nearest_business_day(DATE: datetime.date):
@@ -92,9 +116,7 @@ class Stock:
         return DATE
 
     @staticmethod
-    def for_prophet(
-        df: pd.DataFrame, date_column="date", y_column="Close"
-    ) -> pd.DataFrame:
+    def for_prophet(df: pd.DataFrame, date_column="date", y_column="Close") -> pd.DataFrame:
         return df.rename(columns={date_column: "ds", y_column: "y"})
 
     @st.cache(show_spinner=False)
@@ -119,9 +141,17 @@ class Stock:
         self.train_data = train_data
         self.test_data = test_data
 
+
+
     @st.cache(show_spinner=False)
     def train_prophet(self, kwargs={}):
-        m = Prophet(**kwargs)
+        params={
+            'changepoint_prior_scale':0.0018298282889708827,
+            'holidays_prior_scale':0.00011949782374119523,
+            'seasonality_mode':'additive',
+            'seasonality_prior_scale':4.240162804451275
+        }
+        m = Prophet(**params)
         m.fit(self.train_data)
         self.model = m
         forecasts = m.predict(self.test_data)
@@ -131,6 +161,7 @@ class Stock:
         self.test_mape = mean_absolute_percentage_error(
             self.test_data["y"], self.test_data["yhat"]
         )
+
 
     def plot_test(self, chart_width):
         fig = go.Figure()
@@ -168,7 +199,7 @@ class Stock:
                 x=self.test_data["ds"],
                 y=self.test_data["yhat_lower"],
                 fill="tonexty",
-                fillcolor='rgba(255,69,0,0.2)',
+                fillcolor='rgba(100,69,0,0.2)',
                 mode="lines",
                 line_color="orange",
                 name="CI-",
@@ -189,22 +220,84 @@ class Stock:
 
         return fig
 
+
     @staticmethod 
     def launch_training():
         st.session_state.train_job=True
 
+
+    def plot_inference(self,chart_width):
+        future=self.model.make_future_dataframe(periods=st.session_state.HORIZON,include_history=False)
+        print(future.shape)
+        forecasts=self.model.predict(future)
+        fig=go.Figure()
+        fig.add_trace(
+        go.Scatter(
+            x=forecasts["ds"],
+            y=forecasts["yhat"],
+            mode="lines",
+            name="Predicted CLosing price",
+        )
+        )
+
+        fig.add_trace(
+        go.Scatter(
+            x=forecasts["ds"],
+            y=forecasts["yhat_upper"],
+            fill=None,
+            mode="lines",
+            name="CI+",
+            line_color="orange",
+        )
+        )
+
+        fig.add_trace(
+        go.Scatter(
+            x=forecasts["ds"],
+            y=forecasts["yhat_lower"],
+            fill="tonexty",
+            fillcolor='rgba(100,69,0,0.2)',
+            mode="lines",
+            line_color="orange",
+            name="CI-",
+        )
+        )
+        fig.update_layout(
+        width=chart_width,
+        margin=dict(l=0, r=0, t=0, b=0, pad=0),
+        legend=dict(
+            x=0,
+            y=0.99,
+            traceorder="normal",
+            font=dict(size=12),
+        ),
+        autosize=False,
+        template="plotly_dark",
+        )
+
+        return fig
+
+
     @staticmethod
-    def train_forecast_report(chart_width, symb, TRAIN_INTERVAL_LENGTH, TEST_INTERVAL_LENGTH): 
+    def train_forecast_report(chart_width, symb): 
+        """Launch training and plot testing data and predictions, finally it plots forecasts up to the specified horizon"""
         if st.session_state.train_job:
+            text=st.empty()
             bar=st.empty()
+            
+            text.write('Training model ... ')
             bar=st.progress(0)
 
             stock = Stock(symb)
             bar.progress(10)
+            TEST_INTERVAL_LENGTH=st.session_state.TEST_INTERVAL_LENGTH
+            TRAIN_INTERVAL_LENGTH=st.session_state.TRAIN_INTERVAL_LENGTH
+
             stock.load_train_test_data(TEST_INTERVAL_LENGTH, TRAIN_INTERVAL_LENGTH)
             bar.progress(30)
             stock.train_prophet()
             bar.progress(70)
+            text.write('Plotting test resulst')
             fig = stock.plot_test(chart_width)
             bar.progress(100)
             bar.empty()
@@ -212,6 +305,12 @@ class Stock:
                 f"## {symb} stock forecasts on testing set, Testing error {round(stock.test_mape*100,2)}%"
             )
             st.plotly_chart(fig)
+            text.write('Generating forecasts ... ')
+            fig2=stock.plot_inference(chart_width)
+            st.markdown(f'## Forecasts for the next {st.session_state.HORIZON} days')
+            st.plotly_chart(fig2)
+            text.empty()
+
         else:
             st.markdown('Setup training job and hit Train')
             
