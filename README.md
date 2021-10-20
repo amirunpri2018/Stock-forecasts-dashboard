@@ -1,5 +1,6 @@
 
-# streamlit_investor_dashboard
+# Stock forecasts dashboard
+
 ![screenshot](thumbnail.PNG)
 
 A simple stock forecasting dashboard entirely written in python, features include:
@@ -14,4 +15,5 @@ This is a streamlit app easy to deploy locally or in production to install downl
 NOTE: if prophet fails to install as it did in my case, try installing it through conda:
 `conda install -c conda-forge prophet`
 
+Currently the stock choices are limited to `["AAPL", "GOOG", "MSFT", "GME", "FB",'TSLA']` if you are interested in a production level app contact me via linkedin or send me an email at hamzarabi3@gmail.com
 
