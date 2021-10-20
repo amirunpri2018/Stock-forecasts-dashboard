@@ -8,7 +8,9 @@
 
 A simple stock forecasting dashboard entirely written in python, features include:
 * Visualize a stock closing price over a chosen perdiod of time, and the total change over the period. 
-* Train, test and forecast with a facebook prophet model
+* Train, test and forecast with a facebook prophet model.
+
+
 Files included in this project:
 
 
