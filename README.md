@@ -1,7 +1,7 @@
 
 # Stock forecasts dashboard
 
-![Python](https://img.shields.io/badge/python-v3.8) ![Facebook Prophet](https://img.shields.io/badge/Prophet-1.0.1-blue) ![Scikit-learn](https://img.shields.io/badge/scikit--learn-1.0-blueviolet) ![Pandas](https://img.shields.io/badge/pandas-1.3.3-brightgreen) ![Plotly](https://img.shields.io/badge/plotly-4.14.3-orange) ![Streamlit](https://img.shields.io/badge/streamlit-1.0.0-ff69b4) ![Yahoo finance](https://img.shields.io/badge/yfinance-0.1.64-ff0904)
+![Facebook Prophet](https://img.shields.io/badge/Prophet-1.0.1-blue) ![Scikit-learn](https://img.shields.io/badge/scikit--learn-1.0-blueviolet) ![Pandas](https://img.shields.io/badge/pandas-1.3.3-brightgreen) ![Plotly](https://img.shields.io/badge/plotly-4.14.3-orange) ![Streamlit](https://img.shields.io/badge/streamlit-1.0.0-ff69b4) ![Yahoo finance](https://img.shields.io/badge/yfinance-0.1.64-ff0904)
 
 
 ![screenshot](thumbnail.PNG)
