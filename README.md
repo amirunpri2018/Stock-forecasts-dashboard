@@ -17,6 +17,8 @@ This is a streamlit app easy to deploy locally or in production to install downl
 
 
 `pip install -r requirements.txt`
+
+
 NOTE: if prophet fails to install as it did in my case, try installing it through conda:
 
 
