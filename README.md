@@ -1,2 +1,3 @@
 # streamlit_investor_dashboard
-Building an option trading dashboard with Python
+Building a stock forecasting dashboard with Python. using streamlit to build the web interface, plotly for data viz and facebook prophet for forecasting. 
+
