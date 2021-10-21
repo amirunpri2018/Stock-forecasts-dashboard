@@ -1,51 +1,52 @@
-from mimetypes import init
-import pandas as pd
 import streamlit as st
-from prophet import Prophet, forecaster
 import datetime
 from plotly import graph_objects as go
 import numpy as np
 import plotly.graph_objects as go
-from stock_object import Stock
+from stock import Stock
 
 st.set_page_config(layout="wide", initial_sidebar_state="expanded")
-st.markdown("# Train forecasting models for stock prices")
-# ------ layout setting---------------------------
-window_selection_c = st.sidebar.container()
-window_selection_c.markdown("## Insights")
+st.title('Stock forecast dashboard')
 
-sub_columns = window_selection_c.columns(2)
-change_c = st.sidebar.container()
+
+
+      
+# ------ layout setting---------------------------
+window_selection_c = st.sidebar.container() # create an empty container in the sidebar
+window_selection_c.markdown("## Insights") # add a title to the sidebar container
+sub_columns = window_selection_c.columns(2) #Split the container into two columns for start and end date
 
 # ----------Time window selection-----------------
-YESTERDAY = Stock.nearest_business_day(datetime.date.today()-datetime.timedelta(days=1))
-DEFAULT_START = Stock.nearest_business_day(YESTERDAY - datetime.timedelta(days=700))
+YESTERDAY=datetime.date.today()-datetime.timedelta(days=1)
+YESTERDAY = Stock.nearest_business_day(YESTERDAY) #Round to business day
 
+DEFAULT_START=YESTERDAY - datetime.timedelta(days=700)
+DEFAULT_START = Stock.nearest_business_day(DEFAULT_START)
 
-START = sub_columns[0].date_input(
-    "From", value=DEFAULT_START, max_value=YESTERDAY - datetime.timedelta(days=1)
-)
-START = Stock.nearest_business_day(START)
+START = sub_columns[0].date_input("From", value=DEFAULT_START, max_value=YESTERDAY - datetime.timedelta(days=1))
 END = sub_columns[1].date_input("To", value=YESTERDAY, max_value=YESTERDAY, min_value=START)
+
+START = Stock.nearest_business_day(START)
 END = Stock.nearest_business_day(END)
-
-
 # ---------------stock selection------------------
-STOCKS = np.array(["AAPL", "GOOG", "MSFT", "GME", "FB",'TSLA'])  # TODO : include all stocks
+STOCKS = np.array([ "GOOG", "GME", "FB","AAPL",'TSLA'])  # TODO : include all stocks
 SYMB = window_selection_c.selectbox("select stock", STOCKS)
 
-chart_width = st.expander(label="chart width").slider("", 1000, 2800, 1400)
 
 
-# ------------------------Plot stock linecharts--------------------
+
+if 'CHART_WIDTH' not in st.session_state:
+    st.session_state.CHART_WIDTH=800
+
+chart_width= st.expander(label="chart width").slider("", 500, 2800, 1400,key='CHART_WIDTH')
 
 
-fig = go.Figure()
+# # # ------------------------Plot stock linecharts--------------------
+
+fig=go.Figure()
 stock = Stock(symbol=SYMB)
 stock.load_data(START, END, inplace=True)
 fig = stock.plot_raw_data(fig)
-with change_c:
-    stock.show_delta()
 
 fig.update_layout(
             width=chart_width,
@@ -65,50 +66,53 @@ fig.update_layout(
 
 st.write(fig)
 
-# ---------------------------------------------------------------------------------
+change_c = st.sidebar.container()
+with change_c:
+    stock.show_delta()
+
+
+#----part-1--------------------------------Session state intializations---------------------------------------------------------------
 
 if "TEST_INTERVAL_LENGTH" not in st.session_state:
-    # set the initial default value of the slider widget
-    st.session_state.TEST_INTERVAL_LENGTH = 100
+    # set the initial default value of test interval
+    st.session_state.TEST_INTERVAL_LENGTH = 60
 
 if "TRAIN_INTERVAL_LENGTH" not in st.session_state:
-    # set the initial default value of the slider widget
-    st.session_state.TRAIN_INTERVAL_LENGTH = 200
+    # set the initial default value of the training length widget
+    st.session_state.TRAIN_INTERVAL_LENGTH = 500
 
 if "HORIZON" not in st.session_state:
-    # set the initial default value of the slider widget
-    st.session_state.HORIZON = 7
+    # set the initial default value of horizon length widget
+    st.session_state.HORIZON = 60
 
-if "train_job" not in st.session_state:
-    # set the initial default value of the slider widget
-    st.session_state.train_job = False
-# ------------------------------------------Training configurations-------------------------------------
+if 'TRAINED' not in st.session_state:
+    st.session_state.TRAINED=False
+
+#---------------------------------------------------------Train_test_forecast_splits---------------------------------------------------
 st.sidebar.markdown("## Forecasts")
-form = st.sidebar.form(key="train_dataset")
+train_test_forecast_c = st.sidebar.container()
 
-
-
-
-form.markdown("## Select interval lengths")
-HORIZON = form.number_input(
+train_test_forecast_c.markdown("## Select interval lengths")
+HORIZON = train_test_forecast_c.number_input(
     "Inference horizon", min_value=7, max_value=200, key="HORIZON"
 )
-TEST_INTERVAL_LENGTH = form.number_input(
-    "number of days to test on and visualize",
+TEST_INTERVAL_LENGTH = train_test_forecast_c.number_input(
+    "number of days to test on and visualize",   
     min_value=7,
     key="TEST_INTERVAL_LENGTH",
 )
 
-TRAIN_INTERVAL_LENGTH = form.number_input(
+TRAIN_INTERVAL_LENGTH = train_test_forecast_c.number_input(
     "number of  day to use for training",
     min_value=60,
     key="TRAIN_INTERVAL_LENGTH",
 )
 
 
-form.form_submit_button(
+train_test_forecast_c.button(
     label="Train",
-    on_click=Stock.launch_training
+    key='TRAIN_JOB'
 )
 
-Stock.train_forecast_report(chart_width, SYMB)
+Stock.train_test_forecast_report(SYMB)
+
