@@ -8,3 +8,4 @@ requests == 2.26.0
 scikit_learn == 1.0
 streamlit == 1.0.0
 yfinance == 0.1.64
+
