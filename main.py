@@ -1,6 +1,5 @@
 import streamlit as st
 import datetime
-from plotly import graph_objects as go
 import numpy as np
 import plotly.graph_objects as go
 from stock import Stock
