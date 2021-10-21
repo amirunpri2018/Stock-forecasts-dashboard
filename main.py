@@ -34,10 +34,9 @@ SYMB = window_selection_c.selectbox("select stock", STOCKS)
 
 
 
-if 'CHART_WIDTH' not in st.session_state:
-    st.session_state.CHART_WIDTH=800
 
-chart_width= st.expander(label="chart width").slider("", 500, 2800, 1400,key='CHART_WIDTH')
+
+chart_width= st.expander(label="chart width").slider("", 500, 2800, 1400, key='CHART_WIDTH')
 
 
 # # # ------------------------Plot stock linecharts--------------------
@@ -48,7 +47,7 @@ stock.load_data(START, END, inplace=True)
 fig = stock.plot_raw_data(fig)
 
 fig.update_layout(
-            width=chart_width,
+            width=st.session_state.CHART_WIDTH,
             margin=dict(l=0, r=0, t=0, b=0, pad=0),
             legend=dict(
                 x=0,
